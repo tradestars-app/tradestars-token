@@ -1,0 +1,12 @@
+{
+  "zosversion": "2.2",
+  "name": "tradestars-token",
+  "version": "0.1.0",
+  "contracts": {
+    "TSToken": "TSToken",
+    "VestingManager": "VestingManager"
+  },
+  "dependencies": {
+    "openzeppelin-eth": "^2.1.3"
+  }
+}
