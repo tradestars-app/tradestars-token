@@ -4,38 +4,25 @@
 ## TradeStars Utility Token
 
 ## Dependencies
-- [npm](https://www.npmjs.com/): v6.2.0.
-- [zos](https://www.npmjs.com/package/zos): v1.0.0
-
-You can check if the dependencies are installed correctly by running the following command:
-
-```
-$ npm --version
-6.2.0
-$ zos --version
-1.0.0
-```
+- [npm](https://www.npmjs.com/): v6.9.0.
 
 ## Build and Test
-After installing the dependencies previously mentioned, clone the project repository and enter the root directory:
+Clone the project repository and enter the root directory:
 
 ```
 $ git clone git@github.com:tradestars-app/tradestars-token.git
 $ cd tradestars-token
 ```
 
-Then, install ZeppelinOS and project dependencies:
+Install project dependencies:
 
-```
-$ npm install --global zos
-$ $ npm install`
-```
+`$ npm install`
 
 ## Local Example
 
 Run a local ganache instance as:
 
-`$ ganache-cli --port 9545 --deterministic -e 100`
+`$ ganache-cli --port 9545 --deterministic`
 
 Build and deploy contracts
 
