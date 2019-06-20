@@ -23,9 +23,9 @@ contract Airdropper is Ownable {
     )
         external onlyOwner
     {
-        require(_destArray.lenght == _amountArray.lenght, "arrays should be of same lenght");
+        require(_destArray.length == _amountArray.length, "arrays should be of same lenght");
 
-        for (uint x = 0; x < _amountArray.lenght; x++) {
+        for (uint x = 0; x < _amountArray.length; x++) {
             _tokenAddr.transfer(_destArray[x], _amountArray[x]);
         }
     }

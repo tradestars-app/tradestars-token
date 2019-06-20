@@ -24,9 +24,9 @@ contract VestingManager is Ownable {
     /// Vesting Map
     mapping (address => TokenVesting) private _vestingContractsMap;
 
-    function initialize(address _sender, IERC20 token) public initializer {
+    function initialize(address _sender, IERC20 _token) public initializer {
         Ownable.initialize(_sender);
-        _vestingToken = token;
+        _vestingToken = _token;
     }
 
     /**

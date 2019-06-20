@@ -9,28 +9,45 @@
 ## Build and Test
 Clone the project repository and enter the root directory:
 
-```
+```bash
 $ git clone git@github.com:tradestars-app/tradestars-token.git
 $ cd tradestars-token
 ```
 
 Install project dependencies:
 
-`$ npm install`
+```bash
+$ npm install
+```
 
-## Local Example
+## Local Test Example
 
 Run a local ganache instance as:
 
-`$ ganache-cli --port 9545 --deterministic`
-
-Build and deploy contracts
-
-```
-npx zos session --network local --from 0x1df62f291b2e969fb0849d99d9ce41e2f137006e --expires 3600
-npx zos push --deploy-dependencies
+```bash
+$ ganache-cli --port 9545 --deterministic
+$ npm test
 ```
 
-Run package unit tests
+Publish the project to a network.
 
-`$ npm test`
+```bash
+npx zos session --network ropsten
+npx zos push
+```
+
+Create the proxy instances:
+
+```bash
+$ zos create TSToken --init initialize --args $OWNER
+Creating TSToken proxy and calling initialize with:
+ - _sender (address): $OWNER
+TSToken proxy: 0x568877b70b562af298a8436b28733ed6be6aad46
+```
+```bash
+$ zos create VestingManager --init initialize --args $OWNER,$TSTOKEN
+Creating VestingManager proxy and calling initialize with:
+ - _sender (address): $OWNER
+ - _token (address): $TSTOKEN
+VestingManager proxy: 0x568877b70b562af298a8436b28733ed6be6aad46
+```
