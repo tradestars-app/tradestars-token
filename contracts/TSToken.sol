@@ -14,8 +14,8 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Burnable, ERC20Pausable {
     function initialize(address _sender) public initializer {
         Ownable.initialize(_sender);
 
-        ERC20Detailed.initialize(NAME, SYMBOL, DECIMALS);
         ERC20Pausable.initialize(_sender);
+        ERC20Detailed.initialize(NAME, SYMBOL, DECIMALS);
     }
 
     function mint(address to, uint256 value) public onlyOwner {

@@ -19,7 +19,7 @@ function checkBeneficiaryRevoked(log) {
 const TSToken = Contracts.getFromLocal('TSToken');
 const VestingManager = Contracts.getFromLocal('VestingManager');
 
-contract('TSToken', ([_, owner, notOwner, party1, party2, party3, party4, party5, party6, party7]) => {
+contract('VestingManager', ([_, owner, notOwner, party1, party2, party3, party4, party5, party6, party7]) => {
 
   let vestingManager;
   let token;
@@ -33,7 +33,7 @@ contract('TSToken', ([_, owner, notOwner, party1, party2, party3, party4, party5
   before(async function() {
     const project = await TestHelper();
 
-    /// Create Vesting Manager
+    /// Create TS Token
     token = await project.createProxy(TSToken, {
       initMethod: 'initialize',
       initArgs: [owner]
@@ -69,18 +69,18 @@ contract('TSToken', ([_, owner, notOwner, party1, party2, party3, party4, party5
 
   describe('Positive Tests', function() {
 
-    it(`should OK add()`, async function() {
+    it(`should OK createVesting()`, async function() {
       const tx = await createVesting(party1, owner);
       checkBeneficiaryAdded(tx.events.BeneficiaryAdded);
     });
 
-    it(`should FAIL add :: not owner`, async function() {
+    it(`should FAIL createVesting() :: not owner`, async function() {
       await assertRevert(
         createVesting(party1, notOwner)
       );
     });
 
-    it(`should FAIL add :: allreary vesting`, async function() {
+    it(`should FAIL createVesting() :: allreary vesting`, async function() {
       await assertRevert(
         createVesting(party1, owner)
       );
@@ -118,7 +118,7 @@ contract('TSToken', ([_, owner, notOwner, party1, party2, party3, party4, party5
       available.should.be.eq(`${vestingTeamTokens}`);
     });
 
-    it(`should OK add() :: 5 vestors [p2...p6]`, async function() {
+    it(`should OK createVesting() :: 5 vestors [p2...p6]`, async function() {
       for (let party of [party2, party3, party4, party5, party6]) {
         await createVesting(party, owner);
       }
@@ -127,7 +127,7 @@ contract('TSToken', ([_, owner, notOwner, party1, party2, party3, party4, party5
       available.should.be.eq('0');
     });
 
-    it(`should FAIL add :: no tokens left`, async function() {
+    it(`should FAIL createVesting() :: no tokens left`, async function() {
       await assertRevert(
         createVesting(party7, owner)
       );
