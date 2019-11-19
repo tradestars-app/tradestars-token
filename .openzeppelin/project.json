@@ -1,0 +1,16 @@
+{
+  "manifestVersion": "2.2",
+  "contracts": {
+    "TSToken": "TSToken",
+    "VestingManager": "VestingManager"
+  },
+  "dependencies": {},
+  "name": "tradestars-token",
+  "version": "1.0.0",
+  "compiler": {
+    "manager": "truffle",
+    "compilerSettings": {
+      "optimizer": {}
+    }
+  }
+}
