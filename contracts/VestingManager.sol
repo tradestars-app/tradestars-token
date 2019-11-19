@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.5.12;
 
 import "openzeppelin-eth/contracts/drafts/TokenVesting.sol";
 import "openzeppelin-eth/contracts/token/ERC20/SafeERC20.sol";
@@ -25,7 +25,7 @@ contract VestingManager is Ownable {
     mapping (address => TokenVesting) private _vestingContractsMap;
 
     function initialize(address _sender, IERC20 _token) public initializer {
-        Ownable.initialize(_sender);
+        Administrable.initialize(_sender);
         _vestingToken = _token;
     }
 

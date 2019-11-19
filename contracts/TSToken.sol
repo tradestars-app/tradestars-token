@@ -1,6 +1,5 @@
 pragma solidity ^0.5.12;
 
-import "./Administrable.sol";
 import "openzeppelin-eth/contracts/token/ERC20/ERC20Detailed.sol";
 import "openzeppelin-eth/contracts/token/ERC20/ERC20Pausable.sol";
 
@@ -12,22 +11,14 @@ contract TSToken is Administrable, ERC20Detailed, ERC20Pausable {
 
     /// We keep this allowed address for airdrops and deposits
     address private depositManager;
-
     uint256 public tokensBurned;
-
-    function initialize(address _sender) public initializer {
-        Administrable.initialize(_sender);
-
-        ERC20Pausable.initialize(_sender);
-        ERC20Detailed.initialize(NAME, SYMBOL, DECIMALS);
-    }
 
     /**
      * @dev Mints a specific amount of tokens.
      * @param _to The amount of token to be minted.
      * @param _value The amount of token to be minted.
      */
-    function mint(address _to, uint256 _value) public onlyAdmin {
+    function mint(address _to, uint256 _value) external onlyOwner {
         _mint(_to, _value);
     }
 
@@ -35,7 +26,7 @@ contract TSToken is Administrable, ERC20Detailed, ERC20Pausable {
      * @dev Burns a specific amount of tokens.
      * @param _value The amount of token to be burned.
      */
-    function burn(uint256 _value) public {
+    function burn(uint256 _value) external {
         _burn(msg.sender, _value);
 
         tokensBurned = tokensBurned.add(_value);
@@ -46,7 +37,7 @@ contract TSToken is Administrable, ERC20Detailed, ERC20Pausable {
      * @param _from address The address which you want to send tokens from
      * @param _value uint256 The amount of token to be burned
      */
-    function burnFrom(address _from, uint256 _value) public {
+    function burnFrom(address _from, uint256 _value) external {
         _burnFrom(_from, _value);
 
         tokensBurned = tokensBurned.add(_value);
@@ -56,7 +47,7 @@ contract TSToken is Administrable, ERC20Detailed, ERC20Pausable {
      * @dev Sets the referral contract address. Can only be called by admin
      * @param _depositManager address
      */
-    function setDepositManagerAddress(address _depositManager) public onlyAdmin {
+    function setDepositManagerAddress(address _depositManager) external onlyOwner {
         depositManager = _depositManager;
     }
 
@@ -72,7 +63,7 @@ contract TSToken is Administrable, ERC20Detailed, ERC20Pausable {
         uint256 addedValue,
         address plasmaContract
     )
-        public whenNotPaused
+        external whenNotPaused
     {
         uint256 allowance = _allowances[owner][plasmaContract];
 
@@ -81,5 +72,15 @@ contract TSToken is Administrable, ERC20Detailed, ERC20Pausable {
         require(allowance == 0, "plasmaContract as allowance > 0");
 
         _approve(owner, plasmaContract, allowance.add(addedValue));
+    }
+
+    /**
+     * Initializer function.
+     */
+    function initialize(address _owner) public initializer {
+        Ownable.initialize(_owner);
+
+        ERC20Pausable.initialize(_owner);
+        ERC20Detailed.initialize(NAME, SYMBOL, DECIMALS);
     }
 }
