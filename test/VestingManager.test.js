@@ -1,19 +1,15 @@
-import { TestHelper } from 'zos';
-import { assertRevert, Contracts, ZWeb3 } from 'zos-lib';
-import { toWei, BN } from 'web3-utils';
+const { TestHelper } = require('@openzeppelin/cli');
+const { Contracts, ZWeb3, assertRevert } = require('@openzeppelin/upgrades');
+
+const { toWei, BN } = require('web3-utils');
 
 ZWeb3.initialize(web3.currentProvider);
 
 require('chai').should();
 
-/// Test for events.
-
-function checkBeneficiaryAdded(log) {
-  log.event.should.be.eq('BeneficiaryAdded');
-}
-
-function checkBeneficiaryRevoked(log) {
-  log.event.should.be.eq('BeneficiaryRevoked');
+/// check events
+function checkEventName(tx, eventName) {
+  tx.events[eventName].event.should.be.eq(eventName);
 }
 
 const TSToken = Contracts.getFromLocal('TSToken');
@@ -71,19 +67,7 @@ contract('VestingManager', ([_, owner, notOwner, party1, party2, party3, party4,
 
     it(`should OK createVesting()`, async function() {
       const tx = await createVesting(party1, owner);
-      checkBeneficiaryAdded(tx.events.BeneficiaryAdded);
-    });
-
-    it(`should FAIL createVesting() :: not owner`, async function() {
-      await assertRevert(
-        createVesting(party1, notOwner)
-      );
-    });
-
-    it(`should FAIL createVesting() :: allreary vesting`, async function() {
-      await assertRevert(
-        createVesting(party1, owner)
-      );
+      checkEventName(tx, "BeneficiaryAdded");
     });
 
     it(`should OK lockedInTokens()`, async function() {
@@ -110,7 +94,10 @@ contract('VestingManager', ([_, owner, notOwner, party1, party2, party3, party4,
         from: owner,
         gas: 6721975
       });
-      checkBeneficiaryRevoked(tx.events.BeneficiaryRevoked);
+      checkEventName(tx, "BeneficiaryRevoked");
+
+      const available = await vestingManager.methods.availableTokens().call();
+      available.should.be.eq(`${vestingTeamTokens}`);
     });
 
     it(`Should OK availableTokens()`, async function() {
@@ -127,23 +114,27 @@ contract('VestingManager', ([_, owner, notOwner, party1, party2, party3, party4,
       available.should.be.eq('0');
     });
 
+  });
+
+  describe('Negative Tests', function() {
+
+    it(`should FAIL createVesting() :: not owner`, async function() {
+      await assertRevert(
+        createVesting(party1, notOwner)
+      );
+    });
+
+    it(`should FAIL createVesting() :: allreary vesting`, async function() {
+      await assertRevert(
+        createVesting(party1, owner)
+      );
+    });
+
     it(`should FAIL createVesting() :: no tokens left`, async function() {
       await assertRevert(
         createVesting(party7, owner)
       );
     });
 
-    it(`should OK revoke() :: 5 vestors [p2...p6]`, async function() {
-      for (let party of [party2, party3, party4, party5, party6]) {
-        await vestingManager.methods.revoke(party).send({
-          from: owner,
-          gas: 6721975
-        });
-      }
-      const available = await vestingManager.methods.availableTokens().call();
-      available.should.be.eq(`${vestingTeamTokens}`);
-    });
-
   });
-
 });

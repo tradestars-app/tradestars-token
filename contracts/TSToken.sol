@@ -1,9 +1,12 @@
 pragma solidity ^0.5.12;
 
-import "openzeppelin-eth/contracts/token/ERC20/ERC20Detailed.sol";
-import "openzeppelin-eth/contracts/token/ERC20/ERC20Pausable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Detailed.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Pausable.sol";
 
-contract TSToken is Administrable, ERC20Detailed, ERC20Pausable {
+contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
+
+    event DepositManagerChange(address depositManager);
 
     string public constant NAME = "TradeStars TS Utility Coin";
     string public constant SYMBOL = "TS";
@@ -49,6 +52,7 @@ contract TSToken is Administrable, ERC20Detailed, ERC20Pausable {
      */
     function setDepositManagerAddress(address _depositManager) external onlyOwner {
         depositManager = _depositManager;
+        emit DepositManagerChange(depositManager);
     }
 
     /**
@@ -65,7 +69,7 @@ contract TSToken is Administrable, ERC20Detailed, ERC20Pausable {
     )
         external whenNotPaused
     {
-        uint256 allowance = _allowances[owner][plasmaContract];
+        uint256 allowance = allowance(owner, plasmaContract);
 
         /// Check msg sender is our contract && allowance is 0
         require(msg.sender == address(depositManager), "invalid from");
