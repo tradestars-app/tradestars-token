@@ -1,8 +1,6 @@
-# Contracts for [TradeStars.app](https://tradestars.app) utility token.
+# Contracts for [TradeStars.app](https://tradestars.app) utility token and vesting management.
 
 [![Build Status](https://travis-ci.com/tradestars-app/tradestars-token.svg?branch=master)](https://travis-ci.com/tradestars-app/tradestars-token)
-
-## TradeStars Utility Token
 
 ## Dependencies
 - [npm](https://www.npmjs.com/): v6.9.0.
