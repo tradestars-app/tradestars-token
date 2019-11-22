@@ -31,6 +31,6 @@ $ npm run test
 Publish the project to a network.
 
 ```bash
-npx zos session --network ropsten
-npx zos push
+npx oz session --network ropsten
+npx oz push
 ```
