@@ -155,20 +155,20 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
     /**
      * Initializer function.
      */
-    function initialize(address _owner) public initializer {
-        Ownable.initialize(_owner);
+    function initialize(address _sender) public initializer {
+        Ownable.initialize(_sender);
 
-        ERC20Pausable.initialize(_owner);
+        ERC20Pausable.initialize(_sender);
         ERC20Detailed.initialize(NAME, SYMBOL, DECIMALS);
     }
 
     /**
      * @dev Atomically increases the allowance and calls plasma deposit()
-     * @param owner user address
+     * @param toAddr user address
      * @param amount amount to deposit
      * @param plasmaRoot address of the plasma root contract
      */
-    function _plasmaDeposit(address owner, uint256 amount, address plasmaRoot) private {
+    function _plasmaDeposit(address toAddr, uint256 amount, address plasmaRoot) private {
 
         /// Aprove allowance
         IERC20(this).safeApprove(plasmaRoot, amount);
@@ -176,10 +176,10 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
         /// Call plasma deposit
         IPlasmaRoot(plasmaRoot).deposit(
             address(this),
-            owner,
+            toAddr,
             amount
         );
 
-        emit PlasmaDeposit(owner, amount);
+        emit PlasmaDeposit(toAddr, amount);
     }
 }
