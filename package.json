@@ -29,7 +29,8 @@
     "compile": "rm -rf build && truffle compile",
     "test": "npm run compile && truffle test --network local",
     "lint:sol": "solium -d contracts",
-    "lint:sol:fix": "solium -d contracts --fix"
+    "lint:sol:fix": "solium -d contracts --fix",
+    "copy-artifacts": "bash bin/copy-artifacts.sh"
   },
   "repository": {
     "type": "git",
