@@ -102,7 +102,7 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
         uint256 tokensPerCredit,
         address plasmaRoot
     )
-        external onlyReferralManager whenNotPaused
+        external onlyReferralManager
     {
         ReferralInfo storage referralInfo = referralsInfo[userAddr];
 
@@ -119,7 +119,7 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
         /// transfer TSX to user account
         IERC20(this).safeTransfer(userAddr, amount);
 
-        /// Call plasma deposit()
+        /// Call plasma deposit
         _plasmaDeposit(userAddr, amount, plasmaRoot);
 
         emit Redeemed(userAddr, amount);
@@ -144,11 +144,28 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
     }
 
     /**
+     * Atomically approve and transfer tokens to a plasma sidechain.
+     *  only used by admin.
+     * @param userTo address to deposit tokens to
+     * @param amount of tokens to transfer
+     * @param plasmaRoot address of the plasma contract
+     */
+    function plasmaDeposit(
+        address userTo,
+        uint256 amount,
+        address plasmaRoot
+    )
+        external onlyReferralManager
+    {
+        _plasmaDeposit(userTo, amount, plasmaRoot);
+    }
+
+    /**
      * Atomically approve and transfer tokens to a plasma sidechain
      * @param amount of tokens to transfer
      * @param plasmaRoot address of the plasma contract
      */
-    function plasmaDeposit(uint256 amount, address plasmaRoot) external whenNotPaused {
+    function plasmaDeposit(uint256 amount, address plasmaRoot) external {
         _plasmaDeposit(msg.sender, amount, plasmaRoot);
     }
 
@@ -170,8 +187,11 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
      */
     function _plasmaDeposit(address toAddr, uint256 amount, address plasmaRoot) private {
 
-        /// Aprove allowance
-        IERC20(this).safeApprove(plasmaRoot, amount);
+        require(amount > 0, "invalid deposita mount");
+        require(allowance(toAddr, plasmaRoot) == 0, "plasmaRoot allowance is > 0");
+
+        /// approve plasma to deposit()
+        _approve(toAddr, plasmaRoot, amount);
 
         /// Call plasma deposit
         IPlasmaRoot(plasmaRoot).deposit(
