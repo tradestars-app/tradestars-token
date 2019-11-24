@@ -113,7 +113,7 @@ contract('TSToken', ([_, owner, notOwner, referralManager, someone, anotherOne])
     /// call from the plasmaRoot contract. (calls transferFrom on each deposit)
     beforeEach(async function () {
       await token.methods.approve(plasmaRoot.address, 0).send({
-        from: someone,
+        from: referralManager,
         gas: 5000000
       });
     });

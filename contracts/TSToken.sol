@@ -1,7 +1,6 @@
 pragma solidity ^0.5.12;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Detailed.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Pausable.sol";
 
@@ -10,8 +9,6 @@ interface IPlasmaRoot {
 }
 
 contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
-
-    using SafeERC20 for IERC20;
 
     event PlasmaDeposit(address indexed from, uint256 amount);
     event Redeemed(address indexed user, uint256 amount);
@@ -116,9 +113,6 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
         referralInfo.qualifiedNonce = qualifiedNonce;
         referralInfo.accumulatedAmount = referralInfo.accumulatedAmount.add(amount);
 
-        /// transfer TSX to user account
-        IERC20(this).safeTransfer(userAddr, amount);
-
         /// Call plasma deposit
         _plasmaDeposit(userAddr, amount, plasmaRoot);
 
@@ -139,7 +133,7 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
         require(_destArray.length == _amountArray.length, "arrays should be of same lenght");
 
         for (uint x = 0; x < _amountArray.length; x++) {
-            IERC20(this).safeTransfer(_destArray[x], _amountArray[x]);
+            _transfer(msg.sender, _destArray[x], _amountArray[x]);
         }
     }
 
@@ -187,11 +181,11 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
      */
     function _plasmaDeposit(address toAddr, uint256 amount, address plasmaRoot) private {
 
-        require(amount > 0, "invalid deposita mount");
-        require(allowance(toAddr, plasmaRoot) == 0, "plasmaRoot allowance is > 0");
+        require(amount > 0, "invalid deposit mount");
+        require(allowance(referralManager, plasmaRoot) == 0, "plasmaRoot allowance is > 0");
 
         /// approve plasma to deposit()
-        _approve(toAddr, plasmaRoot, amount);
+        _approve(referralManager, plasmaRoot, amount);
 
         /// Call plasma deposit
         IPlasmaRoot(plasmaRoot).deposit(
