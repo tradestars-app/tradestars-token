@@ -108,7 +108,6 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
 
         /// Calculate net amount to send
         uint256 amount = (qualifiedNonce - referralInfo.qualifiedNonce) * tokensPerCredit;
-        require(balanceOf(referralManager) >= amount, "referralAdmin has no balance");
 
         referralInfo.qualifiedNonce = qualifiedNonce;
         referralInfo.accumulatedAmount = referralInfo.accumulatedAmount.add(amount);
@@ -175,17 +174,21 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
 
     /**
      * @dev Atomically increases the allowance and calls plasma deposit()
-     * @param toAddr user address
+     * @param toAddr user address to deposit
      * @param amount amount to deposit
      * @param plasmaRoot address of the plasma root contract
      */
-    function _plasmaDeposit(address toAddr, uint256 amount, address plasmaRoot) private {
+    function _plasmaDeposit(
+        address toAddr,
+        uint256 amount,
+        address plasmaRoot
+    ) private {
+        require(amount > 0, "invalid amount");
+        require(allowance(address(this), plasmaRoot) == 0, "plasmaRoot allowance is > 0");
 
-        require(amount > 0, "invalid deposit mount");
-        require(allowance(referralManager, plasmaRoot) == 0, "plasmaRoot allowance is > 0");
-
-        /// approve plasma to deposit()
-        _approve(referralManager, plasmaRoot, amount);
+        /// approve plasma to call deposit()
+        _transfer(msg.sender, address(this), amount);
+        _approve(address(this), plasmaRoot, amount);
 
         /// Call plasma deposit
         IPlasmaRoot(plasmaRoot).deposit(
