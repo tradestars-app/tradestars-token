@@ -1,11 +1,11 @@
 {
   "contracts": {
     "TSToken": {
-      "address": "0x69aBF2a614aD43BAbCb72a88b5Ba16f3DD8f15a5",
+      "address": "0x66636262a78f1AD17bA9D08d3bC0d8428F640362",
       "constructorCode": "608060405261265d806100136000396000f3fe",
-      "bodyBytecodeHash": "64c12272f91a1af287e1d76b4da6d3272d9cffbf78ca1ad69a6aa34b9eea2c66",
-      "localBytecodeHash": "6573c2dfb503d653c937d8f09a6e2d999a43bef97d8773f51f1fd85c26fa9e78",
-      "deployedBytecodeHash": "6573c2dfb503d653c937d8f09a6e2d999a43bef97d8773f51f1fd85c26fa9e78",
+      "bodyBytecodeHash": "6d1a413e62f1b7d523ed8e3738fa26163f7e41c088f81ff2998b1a07e0850457",
+      "localBytecodeHash": "d7d6518d5343f4451dcbbd474416e3c493e76203c6cdf97a5c43cf297aa1749e",
+      "deployedBytecodeHash": "d7d6518d5343f4451dcbbd474416e3c493e76203c6cdf97a5c43cf297aa1749e",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -73,13 +73,13 @@
               "label": "qualifiedNonce",
               "astId": 46,
               "type": "t_uint256",
-              "src": "828:22:1"
+              "src": "841:22:1"
             },
             {
               "label": "accumulatedAmount",
               "astId": 48,
               "type": "t_uint256",
-              "src": "860:25:1"
+              "src": "873:25:1"
             }
           ]
         },
@@ -241,7 +241,7 @@
           "label": "referralsInfo",
           "astId": 53,
           "type": "t_mapping<t_struct<TSToken.ReferralInfo>>",
-          "src": "898:54:1"
+          "src": "911:54:1"
         },
         {
           "contract": "TSToken",
@@ -249,7 +249,7 @@
           "label": "referralManager",
           "astId": 55,
           "type": "t_address",
-          "src": "1018:31:1"
+          "src": "1031:31:1"
         },
         {
           "contract": "TSToken",
@@ -257,7 +257,7 @@
           "label": "tokensBurned",
           "astId": 57,
           "type": "t_uint256",
-          "src": "1095:27:1"
+          "src": "1108:27:1"
         }
       ],
       "warnings": {
@@ -281,7 +281,7 @@
             "label": "referralsInfo",
             "astId": 53,
             "type": "t_mapping<t_struct<TSToken.ReferralInfo>>",
-            "src": "898:54:1"
+            "src": "911:54:1"
           }
         ],
         "storageDiff": []
@@ -411,7 +411,7 @@
       {
         "address": "0xE2814f0B05BBe409Ef4DeB83cdaF9c9C077EFdcf",
         "version": "1.0.0",
-        "implementation": "0x69aBF2a614aD43BAbCb72a88b5Ba16f3DD8f15a5",
+        "implementation": "0x66636262a78f1AD17bA9D08d3bC0d8428F640362",
         "admin": "0xf1fb89bae28db954D8D279E7cEE96440FCFa1305",
         "kind": "Upgradeable"
       }

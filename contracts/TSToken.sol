@@ -5,12 +5,12 @@ import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Deta
 import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Pausable.sol";
 
 interface IPlasmaRoot {
-    function deposit(address tokenAddr, address user, uint256 amount) external;
+    function depositERC20ForUser(address _token, address _user, uint256 _amount) external;
 }
 
 contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
 
-    event PlasmaDeposit(address indexed from, uint256 amount);
+    event PlasmaDeposit(address indexed wallet, uint256 amount);
     event Redeemed(address indexed user, uint256 amount);
 
     /// Token details
@@ -173,10 +173,10 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
     }
 
     /**
-     * @dev Atomically increases the allowance and calls plasma deposit()
+     * @dev Atomically increases the allowance and calls plasma depositERC20ForUser()
      * @param toAddr user address to deposit
      * @param amount amount to deposit
-     * @param plasmaRoot address of the plasma root contract
+     * @param plasmaRoot address of the plasma calling contract
      */
     function _plasmaDeposit(
         address toAddr,
@@ -186,12 +186,13 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
         require(amount > 0, "invalid amount");
         require(allowance(address(this), plasmaRoot) == 0, "plasmaRoot allowance is > 0");
 
-        /// approve plasma to call deposit()
+        /// Temporary deposit sender's tokens in this contract
+        ///  and call Plasma deposit() to transfer them
         _transfer(msg.sender, address(this), amount);
         _approve(address(this), plasmaRoot, amount);
 
         /// Call plasma deposit
-        IPlasmaRoot(plasmaRoot).deposit(
+        IPlasmaRoot(plasmaRoot).depositERC20ForUser(
             address(this),
             toAddr,
             amount
