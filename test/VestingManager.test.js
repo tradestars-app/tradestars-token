@@ -1,108 +1,114 @@
-const { TestHelper } = require('@openzeppelin/cli');
-const { Contracts, ZWeb3, assertRevert } = require('@openzeppelin/upgrades');
+const { accounts, contract } = require('@openzeppelin/test-environment')
+// const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 
-const { toWei, BN } = require('web3-utils');
+const {
+  BN,
+  expectEvent, // Assertions for emitted events
+  expectRevert, // Assertions for transactions that should fail
+} = require('@openzeppelin/test-helpers')
 
-ZWeb3.initialize(web3.currentProvider);
+const { toWei } = require('web3-utils')
+
+const TSToken = contract.fromArtifact('TSToken');
+const VestingManager = contract.fromArtifact('VestingManager');
 
 require('chai').should();
 
-/// check events
-function checkEventName(tx, eventName) {
-  tx.events[eventName].event.should.be.eq(eventName);
-}
-
-const TSToken = Contracts.getFromLocal('TSToken');
-const VestingManager = Contracts.getFromLocal('VestingManager');
-
-contract('VestingManager', ([_, owner, notOwner, party1, party2, party3, party4, party5, party6, party7]) => {
+describe('VestingManager', function () {
+  const [owner, notOwner, party1, party2, party3, party4, party5, party6, party7] = accounts
 
   let vestingManager;
   let token;
 
-  const vestingTeamTokens = 500000000;
-  const vestingPerParty = 100000000; // 5 parties
+  const vestingTeamTokens = toWei('500000000');
+  const vestingPerParty = toWei('100000000'); // 5 parties
   const vestingStart = new Date().getTime();
   const cliffDuration = 0;
   const vestingDuration = 60 * 60 * 24 * 365;
 
   before(async function() {
-    const project = await TestHelper();
-
     /// Create TS Token
-    token = await project.createProxy(TSToken, {
-      initMethod: 'initialize',
-      initArgs: [owner]
-    });
+    // token = await deployProxy(TSToken, {
+    //   initMethod: 'initialize',
+    //   initArgs: [owner]
+    // });
 
     /// Create Vesting Manager
-    vestingManager = await project.createProxy(VestingManager, {
-      initMethod: 'initialize',
-      initArgs: [owner, token.address]
-    });
+    // vestingManager = await deployProxy(VestingManager, {
+    //   initMethod: 'initialize',
+    //   initArgs: [owner, token.address]
+    // });
+
+    // create the TS token as non-upgradedable
+    token = await TSToken.new({ from: owner })
+    await token.initialize({ from: owner })
+
+    // create the vestingManager as non-upgradedable
+    vestingManager = await VestingManager.new({ from: owner })
+    await vestingManager.initialize(token.address, { from: owner })
 
     /// Lock in tokens in Vesting Manager.
-    await token.methods.mint(vestingManager.address, vestingTeamTokens).send({
-      from: owner,
-      gas: 6721975
+    await token.mint(vestingManager.address, vestingTeamTokens, {
+      from: owner
     });
   });
 
   async function createVesting(vestingBeneficiary, sender) {
-    return vestingManager.methods.add(
+    return vestingManager.add(
       vestingPerParty,
       vestingBeneficiary,
       vestingStart,
       cliffDuration,
       vestingDuration,
-      true
-    )
-    .send({
-      from: sender,
-      gas: 6721975
-    });
+      true, {
+        from: sender,
+      }
+    );
   }
 
   describe('Positive Tests', function() {
 
     it(`should OK createVesting()`, async function() {
       const tx = await createVesting(party1, owner);
-      checkEventName(tx, "BeneficiaryAdded");
+      expectEvent(tx, "BeneficiaryAdded");
     });
 
     it(`should OK lockedInTokens()`, async function() {
-      const locked = await vestingManager.methods.lockedInTokens().call();
-      locked.should.be.eq(`${vestingTeamTokens}`);
+      const locked = await vestingManager.lockedInTokens();
+      locked.should.be.bignumber.eq(`${vestingTeamTokens}`);
     });
 
     it(`Should OK availableTokens()`, async function() {
-      const available = await vestingManager.methods.availableTokens().call();
-      available.should.be.eq(`${vestingTeamTokens - vestingPerParty}`);
+      const available = await vestingManager.availableTokens();
+      available.should.be.bignumber.eq(
+        new BN(vestingTeamTokens).sub(
+          new BN(vestingPerParty)
+        )
+      );
     });
 
     it(`Should OK getVestingContracts()`, async function() {
-      const contracts = await vestingManager.methods.getVestingContracts().call();
-      contracts.should.be.an('array').with.lengthOf(1);
+      const contracts = await vestingManager.getVestingContracts();
+      contracts.should.be.bignumber.an('array').with.lengthOf(1);
     });
 
     it(`Should OK vestingContract()`, async function() {
-      await vestingManager.methods.vestingContract(party1).call();
+      await vestingManager.vestingContract(party1);
     });
 
     it(`should OK revoke()`, async function() {
-      const tx = await vestingManager.methods.revoke(party1).send({
-        from: owner,
-        gas: 6721975
+      const tx = await vestingManager.revoke(party1, {
+        from: owner
       });
-      checkEventName(tx, "BeneficiaryRevoked");
+      expectEvent(tx, "BeneficiaryRevoked");
 
-      const available = await vestingManager.methods.availableTokens().call();
-      available.should.be.eq(`${vestingTeamTokens}`);
+      const available = await vestingManager.availableTokens();
+      available.should.be.bignumber.eq(`${vestingTeamTokens}`);
     });
 
     it(`Should OK availableTokens()`, async function() {
-      const available = await vestingManager.methods.availableTokens().call();
-      available.should.be.eq(`${vestingTeamTokens}`);
+      const available = await vestingManager.availableTokens();
+      available.should.be.bignumber.eq(`${vestingTeamTokens}`);
     });
 
     it(`should OK createVesting() :: 5 vestors [p2...p6]`, async function() {
@@ -110,8 +116,8 @@ contract('VestingManager', ([_, owner, notOwner, party1, party2, party3, party4,
         await createVesting(party, owner);
       }
 
-      const available = await vestingManager.methods.availableTokens().call();
-      available.should.be.eq('0');
+      const available = await vestingManager.availableTokens();
+      available.should.be.bignumber.eq('0');
     });
 
   });
@@ -119,20 +125,29 @@ contract('VestingManager', ([_, owner, notOwner, party1, party2, party3, party4,
   describe('Negative Tests', function() {
 
     it(`should FAIL createVesting() :: not owner`, async function() {
-      await assertRevert(
-        createVesting(party1, notOwner)
-      );
-    });
-
-    it(`should FAIL createVesting() :: allreary vesting`, async function() {
-      await assertRevert(
-        createVesting(party1, owner)
+      await expectRevert(
+        createVesting(party1, notOwner),
+        'Ownable: caller is not the owner'
       );
     });
 
     it(`should FAIL createVesting() :: no tokens left`, async function() {
-      await assertRevert(
-        createVesting(party7, owner)
+      await expectRevert(
+        createVesting(party7, owner),
+        'VestingManager: not enought balance'
+      );
+    });
+
+    it(`should FAIL createVesting() :: allready vesting`, async function() {
+      /// mint some tokens
+
+      await token.mint(vestingManager.address, vestingPerParty, {
+        from: owner
+      });
+
+      await expectRevert(
+        createVesting(party1, owner),
+        'VestingManager: beneficiary already added'
       );
     });
 

@@ -1,37 +1,37 @@
-const { TestHelper } = require('@openzeppelin/cli');
-const { Contracts, ZWeb3, assertRevert } = require('@openzeppelin/upgrades');
+const { accounts, contract } = require('@openzeppelin/test-environment')
+// const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 
-const { toWei } = require('web3-utils');
-const abi = require('ethereumjs-abi');
+const {
+  expectEvent, // Assertions for emitted events
+  expectRevert, // Assertions for transactions that should fail
+} = require('@openzeppelin/test-helpers')
 
-ZWeb3.initialize(web3.currentProvider);
+const { toWei } = require('web3-utils')
+
+const TSToken = contract.fromArtifact('TSToken')
+const BridgeMock = contract.fromArtifact('BridgeMock')
 
 require('chai').should();
 
-/// check events
-function checkEventName(tx, eventName) {
-  tx.events[eventName].event.should.be.eq(eventName);
-}
-
-const TSToken = Contracts.getFromLocal('TSToken');
-const MockPlasma = Contracts.getFromLocal('MockContract');
-
-contract('TSToken', ([_, owner, notOwner, referralManager, someone, anotherOne]) => {
+describe('TSToken', function() {
+  const [owner, notOwner, referralManager, someone, anotherOne] = accounts;
 
   let token;
-  let plasmaRoot;
+  let plasmaBridge;
 
   before(async function() {
-      const project = await TestHelper();
-
       /// Create TS Token
-      token = await project.createProxy(TSToken, {
-        initMethod: 'initialize',
-        initArgs: [owner]
-      });
+      // token = await deployProxy(TSToken, {
+      //   initMethod: 'initialize',
+      //   initArgs: [owner]
+      // });
+
+      // create the token as non-upgradedable
+      token = await TSToken.new({ from: owner })
+              await token.initialize({ from: owner })
 
       // create a mock
-      plasmaRoot = await MockPlasma.new({ gas: 4000000 });
+      plasmaBridge = await BridgeMock.new();
   });
 
   describe('Mint/Burn tests', function() {
@@ -39,40 +39,35 @@ contract('TSToken', ([_, owner, notOwner, referralManager, someone, anotherOne])
     it(`should OK mint()`, async function() {
       const amount = toWei('200');
 
-      const tx = await token.methods.mint(anotherOne, amount).send({
-        from: owner,
-        gas: 6721975,
-        gasPrice: 5e9
+      const tx = await token.mint(anotherOne, amount, {
+        from: owner
       });
 
-      checkEventName(tx, "Transfer");
+      expectEvent(tx, "Transfer");
     });
 
     it(`should FAIL mint() :: not owner`, async function() {
       const amount = toWei('200');
 
-      await assertRevert(
-        token.methods.mint(anotherOne, amount).send({
-          from: notOwner,
-          gas: 6721975,
-          gasPrice: 5e9
-        })
+      await expectRevert(
+        token.mint(anotherOne, amount, {
+          from: notOwner
+        }),
+        'Ownable: caller is not the owner'
       );
     });
 
     it(`should OK tokensBurned() counter`, async function() {
       const amount = toWei('100');
 
-      const tx = await token.methods.burn(amount).send({
-        from: anotherOne,
-        gas: 6721975,
-        gasPrice: 5e9
+      const tx = await token.burn(amount, {
+        from: anotherOne
       });
 
-      checkEventName(tx, "Transfer");
+      expectEvent(tx, "Transfer");
 
-      const ret = await token.methods.tokensBurned().call();
-      ret.should.be.eq(String(amount));
+      const ret = await token.tokensBurned()
+      ret.should.be.bignumber.eq(amount);
     });
 
   });
@@ -80,20 +75,17 @@ contract('TSToken', ([_, owner, notOwner, referralManager, someone, anotherOne])
   describe('DepositManager tests', function() {
 
     it(`should OK setReferralManager()`, async function() {
-      await token.methods.setReferralManager(referralManager).send({
-        from: owner,
-        gas: 6721975,
-        gasPrice: 5e9
+      await token.setReferralManager(referralManager, {
+        from: owner
       });
     });
 
     it(`should FAIL setReferralManager() :: not owner`, async function() {
-      await assertRevert(
-        token.methods.setReferralManager(referralManager).send({
-          from: notOwner,
-          gas: 6721975,
-          gasPrice: 5e9
-        })
+      await expectRevert(
+        token.setReferralManager(referralManager, {
+          from: notOwner
+        }),
+        'Ownable: caller is not the owner'
       );
     });
   });
@@ -102,19 +94,8 @@ contract('TSToken', ([_, owner, notOwner, referralManager, someone, anotherOne])
 
     before(async function() {
       /// mint tokens for referralManager
-      await token.methods.mint(referralManager, toWei('1000000')).send({
-        from: owner,
-        gas: 6721975,
-        gasPrice: 5e9
-      });
-    });
-
-    /// Before each call to redem, set allowance to 0, because theres no
-    /// call from the plasmaRoot contract. (calls transferFrom on each deposit)
-    beforeEach(async function () {
-      await token.methods.approve(plasmaRoot.address, 0).send({
-        from: referralManager,
-        gas: 5000000
+      await token.mint(referralManager, toWei('1000000'), {
+        from: owner
       });
     });
 
@@ -122,23 +103,21 @@ contract('TSToken', ([_, owner, notOwner, referralManager, someone, anotherOne])
       const qualifiedNonce = 1;
       const tokensPerCredit = toWei('250');
 
-      const tx = await token.methods.redeemTokens(
+      const tx = await token.redeemTokens(
         someone,
         qualifiedNonce,
         tokensPerCredit,
-        plasmaRoot.address
-      ).send({
-        from: referralManager,
-        gas: 6721975,
-        gasPrice: 5e9
-      });
+        plasmaBridge.address, {
+          from: referralManager
+        }
+      );
 
-      checkEventName(tx, 'Redeemed');
+      expectEvent(tx, 'Redeemed');
 
-      const { nonce, amount } = await token.methods.getReferralInfo(someone).call();
+      const { nonce, amount } = await token.getReferralInfo(someone)
 
-      nonce.should.be.eq(String(qualifiedNonce));
-      amount.should.be.eq(tokensPerCredit);
+      nonce.should.be.bignumber.eq(`${qualifiedNonce}`);
+      amount.should.be.bignumber.eq(tokensPerCredit);
     });
 
     it(`Should OK redeem to non-consecutive nonce`, async function() {
@@ -146,41 +125,37 @@ contract('TSToken', ([_, owner, notOwner, referralManager, someone, anotherOne])
       const tokensPerCredit = toWei('300');
 
       const totalTokensRedeemed = toWei(String( ((4 - 1) * 300) + 250 ));
-
-      const tx = await token.methods.redeemTokens(
+      const tx = await token.redeemTokens(
         someone,
         qualifiedNonce,
         tokensPerCredit,
-        plasmaRoot.address
-      ).send({
-        from: referralManager,
-        gas: 6721975,
-        gasPrice: 5e9
-      });
+        plasmaBridge.address, {
+          from: referralManager
+        }
+      );
 
-      checkEventName(tx, 'Redeemed');
+      expectEvent(tx, 'Redeemed');
 
-      const { nonce, amount } = await token.methods.getReferralInfo(someone).call();
+      const { nonce, amount } = await token.getReferralInfo(someone)
 
-      nonce.should.be.eq(String(qualifiedNonce));
-      amount.should.be.eq(totalTokensRedeemed);
+      nonce.should.be.bignumber.eq(`${qualifiedNonce}`);
+      amount.should.be.bignumber.eq(totalTokensRedeemed);
     });
 
     it(`FAIL redeemTokens() :: nonce invalid (< last nonce)`, async function() {
       const qualifiedNonce = 0;
       const tokensPerCredit = toWei('250');
 
-      await assertRevert(
-        token.methods.redeemTokens(
+      await expectRevert(
+        token.redeemTokens(
           someone,
           qualifiedNonce,
           tokensPerCredit,
-          plasmaRoot.address
-        ).send({
-          from: referralManager,
-          gas: 6721975,
-          gasPrice: 5e9
-        })
+          plasmaBridge.address, {
+            from: referralManager
+          }
+        ),
+        'qualifiedNonce is invalid'
       );
     });
 
@@ -188,17 +163,16 @@ contract('TSToken', ([_, owner, notOwner, referralManager, someone, anotherOne])
       const qualifiedNonce = 4;
       const tokensPerCredit = toWei('250');
 
-      await assertRevert(
-        token.methods.redeemTokens(
+      await expectRevert(
+        token.redeemTokens(
           someone,
           qualifiedNonce,
           tokensPerCredit,
-          plasmaRoot.address
-        ).send({
-          from: referralManager,
-          gas: 6721975,
-          gasPrice: 5e9
-        })
+          plasmaBridge.address, {
+            from: referralManager
+          }
+        ),
+        'qualifiedNonce is invalid'
       );
     });
 
@@ -206,17 +180,16 @@ contract('TSToken', ([_, owner, notOwner, referralManager, someone, anotherOne])
       const qualifiedNonce = 5;
       const tokensPerCredit = toWei('250');
 
-      await assertRevert(
-        token.methods.redeemTokens(
+      await expectRevert(
+        token.redeemTokens(
           someone,
           qualifiedNonce,
           tokensPerCredit,
-          plasmaRoot.address
-        ).send({
-          from: someone,
-          gas: 6721975,
-          gasPrice: 5e9
-        })
+          plasmaBridge.address, {
+            from: someone
+          }
+        ),
+        'msg.sender is not referralManager'
       );
     });
 

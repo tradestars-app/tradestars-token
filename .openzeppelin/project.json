@@ -2,18 +2,25 @@
   "manifestVersion": "2.2",
   "contracts": {
     "TSToken": "TSToken",
+    "Cashier": "Cashier",
     "VestingManager": "VestingManager"
   },
   "dependencies": {},
   "name": "tradestars-token",
   "version": "1.0.0",
   "compiler": {
-    "manager": "truffle",
+    "manager": "openzeppelin",
     "compilerSettings": {
       "optimizer": {
         "enabled": false,
         "runs": "200"
       }
+    },
+    "solcVersion": "0.6.8",
+    "artifactsDir": "build/contracts",
+    "contractsDir": "contracts",
+    "typechain": {
+      "enabled": false
     }
   },
   "telemetryOptIn": false

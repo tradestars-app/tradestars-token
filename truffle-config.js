@@ -1,54 +1,51 @@
-require('babel-register');
-require('babel-polyfill');
+require('@babel/register')
+require('@babel/polyfill')
 
 require('dotenv').config();
 
-const HDWalletProvider = require('@truffle/hdwallet-provider');
+const HDWalletProvider = require('@truffle/hdwallet-provider')
 
-const mnemonic = process.env.MNEMONIC;
-const infuraKey = process.env.INFURA_API_KEY;
+const createWalletProvider = (mnemonic, rpcEndpoint) =>
+  new HDWalletProvider(mnemonic, rpcEndpoint)
+
+const createInfuraProvider = (network = 'mainnet') =>
+  createWalletProvider(
+    process.env.MNEMONIC || '',
+    `https://${network}.infura.io/v3/${process.env.INFURA_API_KEY}`
+  )
 
 module.exports = {
+  plugins: ["solidity-coverage"],
+  compilers: {
+    solc: {
+      version: "0.6.8"
+    }
+  },
   networks: {
-    local: {
+    development: {
       host: 'localhost',
       port: 8545,
       gas: 5500000,
       gasPrice: 5e9,
       network_id: '*'
     },
-    ropsten: {
-      provider: () => new HDWalletProvider(mnemonic, `https://ropsten.infura.io/v3/${infuraKey}`),
-      gas: 5500000,
-      gasPrice: 5e9,
-      network_id: '3'
+    infura_ropsten: {
+      provider: () => createInfuraProvider('ropsten'),
+      gas: 6500000,
+      gasPrice: 50e9,
+      network_id: 3
     },
-    mainnet: {
-      provider: () => new HDWalletProvider(mnemonic, `https://mainnet.infura.io/v3/${infuraKey}`),
-      gas: 5500000,
-      gasPrice: 5e9,
-      network_id: '1'
+    infura_goerli: {
+      provider: () => createInfuraProvider('goerli'),
+      gas: 8000000,
+      gasPrice: 1e9,
+      network_id: 5
     },
-    maticTest: {
-      provider: () => new HDWalletProvider(mnemonic, `https://testnetv3.matic.network`),
+    infura_mainnet: {
+      provider: () => createInfuraProvider('mainnet'),
       gas: 5500000,
-      gasPrice: 0,
-      network_id: '*',
-      confirmations: 2
+      gasPrice: 40e9,
+      network_id: 1
     }
-  },
-  compilers: {
-    solc: {
-      settings: {
-        optimizer: {
-          enabled: true,
-          runs: 200
-        }
-      }
-    }
-  },
-  mocha: {
-    timeout: 10000,
-    slow: 30000
   }
-};
+}

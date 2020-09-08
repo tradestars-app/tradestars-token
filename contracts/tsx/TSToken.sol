@@ -1,15 +1,17 @@
-pragma solidity ^0.5.12;
+// SPDX-License-Identifier: MIT
 
-import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Detailed.sol";
-import "@openzeppelin/contracts-ethereum-package/contracts/token/ERC20/ERC20Pausable.sol";
+pragma solidity ^0.6.8;
+
+import "@openzeppelin/upgrades/contracts/Initializable.sol";
+
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20Pausable.sol";
 
 interface IPlasmaRoot {
     function depositERC20ForUser(address _token, address _user, uint256 _amount) external;
 }
 
-contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
-
+contract TSToken is Initializable, Ownable, ERC20Pausable {
     event PlasmaDeposit(address indexed wallet, uint256 amount);
     event Redeemed(address indexed user, uint256 amount);
 
@@ -40,6 +42,13 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
         _;
     }
 
+    constructor() Ownable() ERC20(NAME, SYMBOL) public { }
+
+    /**
+     * Initializer function.
+     */
+    function initialize() public initializer { }
+
     /**
      * @dev Sets the referral contract address. Can only be called by admin
      * @param _referralManager address
@@ -59,23 +68,26 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
 
     /**
      * @dev Burns a specific amount of tokens.
-     * @param _value The amount of token to be burned.
+     * @param _amount The amount of token to be burned.
      */
-    function burn(uint256 _value) external {
-        _burn(msg.sender, _value);
+    function burn(uint256 _amount) external {
+        _burn(msg.sender, _amount);
 
-        tokensBurned = tokensBurned.add(_value);
+        tokensBurned = tokensBurned.add(_amount);
     }
 
     /**
      * @dev Burns a specific amount of tokens from the target address and decrements allowance
-     * @param _from address The address which you want to send tokens from
-     * @param _value uint256 The amount of token to be burned
+     * @param _account address The address which you want to send tokens from
+     * @param _amount uint256 The amount of token to be burned
      */
-    function burnFrom(address _from, uint256 _value) external {
-        _burnFrom(_from, _value);
+    function burnFrom(address _account, uint256 _amount) public virtual {
+        uint256 decreasedAllowance = allowance(_account, msg.sender).sub(_amount, "ERC20: burn amount exceeds allowance");
 
-        tokensBurned = tokensBurned.add(_value);
+        _approve(_account, msg.sender, decreasedAllowance);
+        _burn(_account, _amount);
+
+        tokensBurned = tokensBurned.add(_amount);
     }
 
     /**
@@ -160,16 +172,6 @@ contract TSToken is Ownable, ERC20Detailed, ERC20Pausable {
      */
     function plasmaDeposit(uint256 amount, address plasmaRoot) external {
         _plasmaDeposit(msg.sender, amount, plasmaRoot);
-    }
-
-    /**
-     * Initializer function.
-     */
-    function initialize(address _sender) public initializer {
-        Ownable.initialize(_sender);
-
-        ERC20Pausable.initialize(_sender);
-        ERC20Detailed.initialize(NAME, SYMBOL, DECIMALS);
     }
 
     /**
