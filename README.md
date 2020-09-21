@@ -1,4 +1,4 @@
-# Contracts for [TradeStars.app](https://tradestars.app) utility token and vesting management.
+# [TradeStars](https://tradestars.app) token contracts.
 
 [![Build Status](https://travis-ci.com/tradestars-app/tradestars-token.svg?branch=master)](https://travis-ci.com/tradestars-app/tradestars-token)
 

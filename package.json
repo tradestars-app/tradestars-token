@@ -1,7 +1,7 @@
 {
   "name": "tradestars-token",
   "version": "1.0.0",
-  "description": "TradeStars Utility Token Contracts",
+  "description": "TradeStars Token Contracts",
   "main": "truffle-config.js",
   "directories": {
     "test": "test"
