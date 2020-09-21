@@ -5,7 +5,6 @@ pragma solidity ^0.6.8;
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
-import "../dex/IUniswapV2Router02.sol";
 
 contract SwapProxyMock {
 
@@ -103,9 +102,9 @@ contract SwapProxyMock {
 }
 
 // Mock called IUniswapV2Router02 methods
-contract UniswapRouterMock is SwapProxyMock, IUniswapV2Router02 {
+contract UniswapRouterMock is SwapProxyMock {
 
-    function WETH() public pure override returns (address) {
+    function WETH() public pure returns (address) {
         return address(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee);
     }
 
@@ -152,7 +151,7 @@ contract UniswapRouterMock is SwapProxyMock, IUniswapV2Router02 {
         address _to,
         uint
     )
-        external payable override returns (uint[] memory amounts)
+        external payable returns (uint[] memory amounts)
     {
         uint256 convertedTokens = _swapEtherToToken(
             IERC20(_path[_path.length - 1]),
@@ -175,7 +174,7 @@ contract UniswapRouterMock is SwapProxyMock, IUniswapV2Router02 {
         address _to,
         uint
     )
-        external override returns (uint[] memory amounts)
+        external returns (uint[] memory amounts)
     {
         uint256 convertedTokens = _swapTokenToToken(
             IERC20(_path[0]),

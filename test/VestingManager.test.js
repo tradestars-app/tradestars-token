@@ -12,7 +12,9 @@ const { toWei } = require('web3-utils')
 const TSToken = contract.fromArtifact('TSToken');
 const VestingManager = contract.fromArtifact('VestingManager');
 
-require('chai').should();
+const expect = require('chai')
+  .use(require('bn-chai')(BN))
+  .expect
 
 describe('VestingManager', function () {
   const [owner, notOwner, party1, party2, party3, party4, party5, party6, party7] = accounts
@@ -75,12 +77,13 @@ describe('VestingManager', function () {
 
     it(`should OK lockedInTokens()`, async function() {
       const locked = await vestingManager.lockedInTokens();
-      locked.should.be.bignumber.eq(`${vestingTeamTokens}`);
+
+      expect(locked).to.be.eq.BN(`${vestingTeamTokens}`);
     });
 
     it(`Should OK availableTokens()`, async function() {
       const available = await vestingManager.availableTokens();
-      available.should.be.bignumber.eq(
+      expect(available).to.be.eq.BN(
         new BN(vestingTeamTokens).sub(
           new BN(vestingPerParty)
         )
@@ -89,7 +92,7 @@ describe('VestingManager', function () {
 
     it(`Should OK getVestingContracts()`, async function() {
       const contracts = await vestingManager.getVestingContracts();
-      contracts.should.be.bignumber.an('array').with.lengthOf(1);
+      expect(contracts).to.be.an('array').with.lengthOf(1);
     });
 
     it(`Should OK vestingContract()`, async function() {
@@ -103,12 +106,12 @@ describe('VestingManager', function () {
       expectEvent(tx, "BeneficiaryRevoked");
 
       const available = await vestingManager.availableTokens();
-      available.should.be.bignumber.eq(`${vestingTeamTokens}`);
+      expect(available).to.be.eq.BN(`${vestingTeamTokens}`);
     });
 
     it(`Should OK availableTokens()`, async function() {
       const available = await vestingManager.availableTokens();
-      available.should.be.bignumber.eq(`${vestingTeamTokens}`);
+      expect(available).to.be.eq.BN(`${vestingTeamTokens}`);
     });
 
     it(`should OK createVesting() :: 5 vestors [p2...p6]`, async function() {
@@ -117,7 +120,7 @@ describe('VestingManager', function () {
       }
 
       const available = await vestingManager.availableTokens();
-      available.should.be.bignumber.eq('0');
+      expect(available).to.be.eq.BN('0');
     });
 
   });

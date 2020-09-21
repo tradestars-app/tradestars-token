@@ -2,6 +2,7 @@ const { accounts, contract } = require('@openzeppelin/test-environment')
 // const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 
 const {
+  BN,
   expectEvent, // Assertions for emitted events
   expectRevert, // Assertions for transactions that should fail
 } = require('@openzeppelin/test-helpers')
@@ -11,7 +12,10 @@ const { toWei } = require('web3-utils')
 const TSToken = contract.fromArtifact('TSToken')
 const BridgeMock = contract.fromArtifact('BridgeMock')
 
-require('chai').should();
+const expect = require('chai')
+  .use(require('bn-chai')(BN))
+  .expect
+
 
 describe('TSToken', function() {
   const [owner, notOwner, referralManager, someone, anotherOne] = accounts;
@@ -63,11 +67,10 @@ describe('TSToken', function() {
       const tx = await token.burn(amount, {
         from: anotherOne
       });
-
       expectEvent(tx, "Transfer");
 
       const ret = await token.tokensBurned()
-      ret.should.be.bignumber.eq(amount);
+      expect(ret).to.be.eq.BN(amount);
     });
 
   });
@@ -116,8 +119,8 @@ describe('TSToken', function() {
 
       const { nonce, amount } = await token.getReferralInfo(someone)
 
-      nonce.should.be.bignumber.eq(`${qualifiedNonce}`);
-      amount.should.be.bignumber.eq(tokensPerCredit);
+      expect(nonce).to.be.eq.BN(`${qualifiedNonce}`);
+      expect(amount).to.be.eq.BN(tokensPerCredit);
     });
 
     it(`Should OK redeem to non-consecutive nonce`, async function() {
@@ -138,8 +141,8 @@ describe('TSToken', function() {
 
       const { nonce, amount } = await token.getReferralInfo(someone)
 
-      nonce.should.be.bignumber.eq(`${qualifiedNonce}`);
-      amount.should.be.bignumber.eq(totalTokensRedeemed);
+      expect(nonce).to.be.eq.BN(`${qualifiedNonce}`);
+      expect(amount).to.be.eq.BN(totalTokensRedeemed);
     });
 
     it(`FAIL redeemTokens() :: nonce invalid (< last nonce)`, async function() {

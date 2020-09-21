@@ -17,18 +17,27 @@ contract BridgeMock {
         address, // _user,
         address _rootToken,
         bytes memory _depositData
-    ) public {
+    )
+        public
+    {
         uint256 amount;
 
         assembly {
-            amount := mload(add(_depositData, add(0x20, 32)))
+            amount := mload(add(_depositData, 32))
         }
+
+        require(amount > 0, "BridgeMock: amount error");
 
         /// get tokens from caller.
         IERC20(_rootToken).safeTransferFrom(
             msg.sender,
             address(this),
             amount
+        );
+
+        require(
+            IERC20(_rootToken).balanceOf(address(this)) >= amount,
+            "BridgeMock: safeTransferFrom err"
         );
     }
 
@@ -36,7 +45,9 @@ contract BridgeMock {
         address _rootToken,
         address, // _to,
         uint256 amount
-    ) public {
+    )
+        public
+    {
 
         /// get tokens from caller.
         IERC20(_rootToken).safeTransferFrom(
@@ -46,7 +57,17 @@ contract BridgeMock {
         );
     }
 
-    // function exit(bytes calldata _inputData) external {
-    //     ///
-    // };
+    // this mock assumes we send the bridged token contract addr as param
+    function exit(bytes memory _burnProof) public {
+        address rootToken;
+        address amount;
+
+        assembly {
+            rootToken := mload(add(_burnProof, 20))
+        }
+
+        uint256 totalAmount = IERC20(rootToken).balanceOf(address(this));
+
+        IERC20(rootToken).safeTransfer(msg.sender, totalAmount);
+    }
 }
