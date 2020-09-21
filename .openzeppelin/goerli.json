@@ -1,0 +1,69 @@
+{
+  "contracts": {},
+  "solidityLibs": {
+    "SafeDelegate": {
+      "address": "0x88871EA10A687D83C8FF1ef24a3f560746E26284",
+      "constructorCode": "6103ef610026600b82828239805160001a60731461001957fe5b30600052607381538281f3fe",
+      "bodyBytecodeHash": "a46b5973da5184f6a302492e38b71f181e8ee4f9b0dd2106a60a84faef692342",
+      "localBytecodeHash": "f661e18d009842559868327fb7f0e3a688d3ce0e5bc2323602be686c745e3428",
+      "deployedBytecodeHash": "f661e18d009842559868327fb7f0e3a688d3ce0e5bc2323602be686c745e3428"
+    }
+  },
+  "proxies": {
+    "tradestars-token/TSX": [
+      {
+        "address": "0x329d6CbC46EA334a0e49625BC6949a28751dC540",
+        "kind": "NonProxy",
+        "bytecodeHash": "848c0bdf9634b2ec9d77d610f621e1b9863d59d7c0951d80852e241a5227ae6e"
+      }
+    ],
+    "tradestars-token/VestingManager": [
+      {
+        "address": "0xE97b22b7e93A29458A8128f0b104aC1d74543d08",
+        "kind": "NonProxy",
+        "bytecodeHash": "ac0dcafef0afff2b82e1461a2798b9ea04aec450d0b5e0c2301857bc6b90647a"
+      }
+    ],
+    "tradestars-token/sTSX": [
+      {
+        "address": "0x4478d40B176C0E81DF3F316b9dF737e65528f2d9",
+        "kind": "NonProxy",
+        "bytecodeHash": "ab09cc4f8055d7ed14b04a5286ab76ced8cd2da45dd06e7cce5e45b05aeefc5e"
+      }
+    ],
+    "tradestars-token/ERC20Mock": [
+      {
+        "address": "0x638A5757cCE648c7e2247f745Dfa08B4c90d41DA",
+        "kind": "NonProxy",
+        "bytecodeHash": "0828e8b9158395cf0d1297551b401e8013ca87fdb89fe906c963f06a5f3503a6"
+      }
+    ],
+    "tradestars-token/BridgeMock": [
+      {
+        "address": "0x829B7d16636729094308D258E394909ee0caA223",
+        "kind": "NonProxy",
+        "bytecodeHash": "8884341297b8ce802270ac08502e702c9817ffe3ed33a6e0779741a5f1bcdd28"
+      }
+    ],
+    "tradestars-token/UniswapManager": [
+      {
+        "address": "0xa4f3d97908CCfb2Bedd700D4606020d2Ca54F9c8",
+        "kind": "NonProxy",
+        "bytecodeHash": "41e351a8ab8536a1369a2a26a13b4a4cc75ecfdfcdada1814a2f22903758dc6e"
+      }
+    ],
+    "tradestars-token/Cashier": [
+      {
+        "address": "0x71f6B3e4732B2ebAD71e6fE3c6c987e6febbaF7c",
+        "kind": "NonProxy",
+        "bytecodeHash": "9d914d31d9a2d5945d8f1bb5f2da6cd50b38484d55805bb35340d0df719e8243"
+      },
+      {
+        "address": "0x311AE8Dca8b04a4a26A9bC88bd137c6C18c98C1a",
+        "kind": "NonProxy",
+        "bytecodeHash": "9d914d31d9a2d5945d8f1bb5f2da6cd50b38484d55805bb35340d0df719e8243"
+      }
+    ]
+  },
+  "manifestVersion": "2.2"
+}
