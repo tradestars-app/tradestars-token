@@ -79,7 +79,6 @@ contract Cashier is Ownable {
             .balanceOf(address(this))
             .sub(bTokenBalance);
 
-        require(withdrawAmount == reserveToken.balanceOf(address(this)), "err");
         require(withdrawAmount > 0, "Cashier: withdrawAmount invalid");
 
         emit BridgeExit(msg.sender, withdrawAmount);
