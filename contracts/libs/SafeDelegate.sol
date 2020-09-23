@@ -10,7 +10,7 @@ library SafeDelegate {
         bytes memory _data,
         string memory _errorMessage
     )
-        public returns (bytes memory)
+        internal returns (bytes memory)
     {
         // solhint-disable-next-line avoid-low-level-calls
         (bool success, bytes memory returndata) = _target.delegatecall(_data);

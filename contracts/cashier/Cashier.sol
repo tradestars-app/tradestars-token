@@ -34,9 +34,11 @@ contract Cashier is Ownable {
     ISwapManager public swapManager;
 
     address public posBridge;
+    address public posErc20Predicate;
 
     constructor(
         address _bridge,
+        address _bridgeERC20Predicate,
         address _reserve,
         address _bridgeableToken,
         address _swapManager
@@ -44,6 +46,7 @@ contract Cashier is Ownable {
         Ownable() public
     {
         posBridge = _bridge;
+        posErc20Predicate = _bridgeERC20Predicate;
 
         reserveToken = IERC20(_reserve);
         bridgeableToken = IBridgableToken(_bridgeableToken);
@@ -150,7 +153,7 @@ contract Cashier is Ownable {
         // mint 1:1 and deposit
         bridgeableToken.mint(address(this), _depositAmount);
 
-        _posDeposit(bridgeableToken, msg.sender, _depositAmount, posBridge);
+        _posDeposit(bridgeableToken, msg.sender, _depositAmount);
     }
 
     /**
@@ -174,32 +177,30 @@ contract Cashier is Ownable {
         (uint256 _depositAmount, uint256 reminder) = abi.decode(r, (uint256,uint256));
         require(reminder == 0, "Cashier :: reminder swap tx");
 
-        // mint 1:1 and deposit
-        bridgeableToken.mint(address(this), _depositAmount);
-
-        _posDeposit(bridgeableToken, msg.sender, _depositAmount, posBridge);
+        _posDeposit(bridgeableToken, msg.sender, _depositAmount);
     }
 
     /**
      * @dev Clears allowance and calls POS bridge depositFor()
+     *  _erc20Token should be already approved to be bridged.
+     *
      * @param _erc20Token to deposit
      * @param _toAddr user address to send tokens to
      * @param _amount amount to deposit
      * @param _bridge address of the POS bridge
      */
     function _posDeposit(
-        IERC20 _erc20Token,
+        IBridgableToken _erc20Token,
         address _toAddr,
-        uint256 _amount,
-        address _bridge
+        uint256 _amount
     )
         private
     {
-        // Allowance should be 0 before the call or fails
-        _erc20Token.safeApprove(_bridge, _amount);
+        // mint 1:1 and deposit
+        _erc20Token.mint(address(this), _amount);
 
-        // /// Call pos bridge depositFor
-        IRootChainManager(_bridge).depositFor(
+        // Call pos bridge depositFor.
+        IRootChainManager(posBridge).depositFor(
             _toAddr,
             address(_erc20Token),
             abi.encode(_amount)
