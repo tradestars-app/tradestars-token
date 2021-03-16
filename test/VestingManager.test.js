@@ -9,7 +9,7 @@ const {
 
 const { toWei } = require('web3-utils')
 
-const TSToken = contract.fromArtifact('TSToken');
+const TSToken = contract.fromArtifact('TSX');
 const VestingManager = contract.fromArtifact('VestingManager');
 
 const expect = require('chai')
@@ -29,21 +29,9 @@ describe('VestingManager', function () {
   const vestingDuration = 60 * 60 * 24 * 365;
 
   before(async function() {
-    /// Create TS Token
-    // token = await deployProxy(TSToken, {
-    //   initMethod: 'initialize',
-    //   initArgs: [owner]
-    // });
-
-    /// Create Vesting Manager
-    // vestingManager = await deployProxy(VestingManager, {
-    //   initMethod: 'initialize',
-    //   initArgs: [owner, token.address]
-    // });
 
     // create the TS token as non-upgradedable
     token = await TSToken.new({ from: owner })
-    await token.initialize({ from: owner })
 
     // create the vestingManager as non-upgradedable
     vestingManager = await VestingManager.new({ from: owner })

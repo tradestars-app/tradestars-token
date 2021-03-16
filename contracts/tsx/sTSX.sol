@@ -2,11 +2,14 @@
 
 pragma solidity ^0.6.8;
 
+
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+import { TransferWithSigERC20 } from "../eip712/TransferWithSigERC20.sol";
 
-contract sTSX is Ownable, ERC20 {
+
+contract sTSX is Ownable, TransferWithSigERC20 {
 
     // Token details
     string public constant NAME = "TradeStars sTSX";

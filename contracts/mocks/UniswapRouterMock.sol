@@ -154,7 +154,7 @@ contract UniswapRouterMock is SwapProxyMock {
         external payable returns (uint[] memory amounts)
     {
         uint256 convertedTokens = _swapEtherToToken(
-            IERC20(_path[_path.length - 1]),
+            IERC20(_path[1]),
             msg.value,
             _to
         );

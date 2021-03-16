@@ -8,13 +8,12 @@ const {
 } = require('@openzeppelin/test-helpers')
 
 const { balanceSnap, etherSnap } = require('./helpers/balanceSnap')
-const { toWei, toHex } = require('web3-utils')
+const { toWei, toHex, soliditySha3 } = require('web3-utils')
 
+const sTSX = contract.fromArtifact('sTSX')
 const Cashier = contract.fromArtifact('Cashier')
-const SafeDelegate = contract.fromArtifact('SafeDelegate')
 
 const ERC20Mock = contract.fromArtifact('ERC20Mock')
-const ERC20MockBurnable = contract.fromArtifact('ERC20MockBurnable')
 
 /// Matic pos
 const Bridge = contract.fromArtifact('BridgeMock')
@@ -23,22 +22,23 @@ const Bridge = contract.fromArtifact('BridgeMock')
 const UniswapManager = contract.fromArtifact('UniswapManager')
 const UniswapRouterMock = contract.fromArtifact('UniswapRouterMock')
 
-// gnosis mock
-const MockContract = contract.fromArtifact('MockContract')
-
 const expect = require('chai')
   .use(require('bn-chai')(BN))
   .expect
-
 
 describe('Cashier', function () {
   const [owner, someone, anotherOne ] = accounts
 
   before(async function () {
+
     /// create a mock tokens
-    this.currencyToken = await ERC20Mock.new({ from: owner })
-    this.reserveToken = await ERC20Mock.new({ from: owner })
-    this.bridgedToken = await ERC20MockBurnable.new({ from: owner })
+    this.currencyToken = await ERC20Mock.new(
+      "currencyToken", "CURR", { from: owner }
+    )
+    this.reserveToken = await ERC20Mock.new(
+      "reserve", "RES", { from: owner }
+    )
+    this.bridgeableToken = await sTSX.new({ from: owner })
 
     /// Mock L2 Bridge
     this.bridge = await Bridge.new({ from: owner })
@@ -48,19 +48,29 @@ describe('Cashier', function () {
 
     this.swapManager = await UniswapManager.new(
       this.uniswapRouterMock.address, { from: owner }
-    )
+      )
 
-    // link safedelegate lib
-    const safeDelegate = await SafeDelegate.new({ from: owner })
-    await Cashier.detectNetwork()
-    await Cashier.link('SafeDelegate', safeDelegate.address)
+    // // link safedelegate lib
+    // const safeDelegate = await SafeDelegate.new({ from: owner })
+    // await Cashier.detectNetwork()
+    // await Cashier.link('SafeDelegate', safeDelegate.address)
 
     /// Cashier
     this.cashier = await Cashier.new(
       this.bridge.address,
       this.reserveToken.address,
-      this.bridgedToken.address,
+      this.bridgeableToken.address,
       this.swapManager.address, {
+        from: owner
+      }
+    )
+
+    // Set minter and opperator for bridgable token
+    await this.bridgeableToken.setMinterAddress(this.cashier.address, { from: owner })
+    await this.bridgeableToken.approveOperator(
+      this.cashier.address, // owner
+      this.bridge.address, // opperator
+      toWei('1000000000', 'ether'), {
         from: owner
       }
     )
@@ -74,14 +84,15 @@ describe('Cashier', function () {
 
     before(async function() {
       // send eth and tokens to the uniswap mock
-      await this.uniswapRouterMock.send(toWei('10'))
-      await this.reserveToken.mint(this.uniswapRouterMock.address, toWei('1000'))
+      const amount = toWei('25', 'ether');
+
+      await this.uniswapRouterMock.send(amount)
+      await this.reserveToken.mint(this.uniswapRouterMock.address, amount)
     })
 
     it('Deposit w/Ether', async function () {
       const amount = new BN( toWei('1') )
-      const exchangedtoStableAmount = await this.uniswapRouterMock
-        .calcTokensPerEther(amount)
+      const exchangedtoStableAmount = await this.uniswapRouterMock.calcTokensPerEther(amount)
 
       // balance trackers.
 
@@ -89,7 +100,7 @@ describe('Cashier', function () {
       const swapPoolTracker = await etherSnap(this.uniswapRouterMock.address, 'swapPool')
 
       const bTokensTracker = await balanceSnap(
-        this.bridgedToken,
+        this.bridgeableToken,
         this.bridge.address,
         'bTokens in bridge'
       )
@@ -100,9 +111,8 @@ describe('Cashier', function () {
         'rTokens in cashier'
       )
 
-      ////
-
-      const tx = await this.cashier.methods['deposit()']({
+      //
+      const tx = await this.cashier.methods['deposit(address)'](someone, {
         value: amount,
         from: someone,
         gasPrice: 0 // note
@@ -134,7 +144,7 @@ describe('Cashier', function () {
       )
 
       const bTokensTracker = await balanceSnap(
-        this.bridgedToken,
+        this.bridgeableToken,
         this.bridge.address,
         'bTokens in bridge'
       )
@@ -150,16 +160,17 @@ describe('Cashier', function () {
         }
       )
 
-      const tx = await this.cashier.deposit(
+      const tx = await this.cashier.methods['deposit(address,uint256,address)'](
         this.currencyToken.address,
-        amount, {
+        amount,
+        someone, { // addrTo
           from: someone
         }
       )
 
       // console.log('[GAS] ::', tx.receipt.gasUsed)
 
-      expect(tx.receipt.gasUsed).to.be.lt.BN(140000)
+      expect(tx.receipt.gasUsed).to.be.lt.BN(160000)
       expectEvent(tx, 'BridgeDeposit')
 
       /// check balances mapped and bridged
@@ -180,27 +191,50 @@ describe('Cashier', function () {
           from: someone
         }
       )
-
-      const tx = await this.cashier.deposit(
+      const tx = await this.cashier.methods['deposit(address,uint256,address)'](
         this.reserveToken.address,
-        amount, {
+        amount,
+        someone, { // addrTo
           from: someone
         }
       )
 
       // console.log('[GAS] ::', tx.receipt.gasUsed)
 
-      expect(tx.receipt.gasUsed).to.be.lt.BN(70000)
+      expect(tx.receipt.gasUsed).to.be.lt.BN(80000)
       expectEvent(tx, 'BridgeDeposit')
     })
   })
 
   describe('Withdraw tests', function () {
 
-    it('Changed withdraw OK', async function () {
+    before(async function() {
+      // send eth and tokens to the uniswap mock
+      const amount = toWei('25', 'ether');
+      const depositAmount = toWei('1', 'ether');
+
+      await this.uniswapRouterMock.send(amount)
+      await this.reserveToken.mint(this.uniswapRouterMock.address, amount)
+
+      // deposit currencyToken
+      await this.currencyToken.mint(someone, depositAmount);
+      await this.currencyToken.approve(this.cashier.address, depositAmount, {
+        from: someone
+      })
+
+      await this.cashier.methods['deposit(address,uint256,address)'](
+        this.currencyToken.address,
+        depositAmount,
+        someone, {
+          from: someone
+        }
+      )
+    })
+
+    it('withdraw OK', async function () {
 
       // trick the mock bridge use this param
-      const burnProof = this.bridgedToken.address
+      const burnProof = this.bridgeableToken.address
 
       const cashierBalance = await balanceSnap(
         this.reserveToken,
@@ -220,7 +254,7 @@ describe('Cashier', function () {
 
       const tx = await this.cashier.withdraw(
         this.reserveToken.address,
-        burnProof, { ///
+        burnProof, {
           from: someone
         }
       )

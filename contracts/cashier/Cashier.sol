@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 
+import "../eip712/ITransferWithSig.sol";
+
 import "../defi/ILendManager.sol";
 import "../dex/ISwapManager.sol";
 
@@ -14,7 +16,6 @@ import "../matic/IRootChainManager.sol";
 import "../matic/IBridgableToken.sol";
 
 import "../libs/SafeDelegate.sol";
-
 
 contract Cashier is Ownable {
 
@@ -34,11 +35,9 @@ contract Cashier is Ownable {
     ISwapManager public swapManager;
 
     address public posBridge;
-    address public posErc20Predicate;
 
     constructor(
         address _bridge,
-        address _bridgeERC20Predicate,
         address _reserve,
         address _bridgeableToken,
         address _swapManager
@@ -46,7 +45,6 @@ contract Cashier is Ownable {
         Ownable() public
     {
         posBridge = _bridge;
-        posErc20Predicate = _bridgeERC20Predicate;
 
         reserveToken = IERC20(_reserve);
         bridgeableToken = IBridgableToken(_bridgeableToken);
@@ -64,18 +62,44 @@ contract Cashier is Ownable {
     }
 
     /**
-     * @dev redeem ERC20
+     * @dev The exit() sends tokens to layer 2 withdrawer(),
+     *  we need to get those tokens here to convert sTSX into paymentToken.
+     *  We'are calling this method with a eip712 token transfer signature for that purpose.
+     *
+     * @param _tokenAmount sigTransfer tokenAmount
+     * @param _expiration sigTransfer expiration
+     * @param _orderId sigTransfer orderId
+     * @param _orderSignature signedTypedData signature
+     * @param _paymentToken final payment token ERC20 address
+     * @param _burnProof from withdraw() inclusion in mainnet
      */
     function withdraw(
-        IERC20 _withdrawToken,
+        uint256 _tokenAmount,
+        uint256 _expiration,
+        bytes32 _orderId,
+        bytes calldata _orderSignature,
+        IERC20 _paymentToken,
         bytes calldata _burnProof
     )
         external
     {
         uint256 bTokenBalance = bridgeableToken.balanceOf(address(this));
 
-        // Get tokens from L2
+        // Get tokens from L2 bridge
         IRootChainManager(posBridge).exit(_burnProof);
+
+        // Transfer sTSX amount from L2 burner's address
+        //  to this contract using EIP712 signature
+
+        ITransferWithSig(address(bridgeableToken)).transferWithSig(
+            _orderSignature,
+            _tokenAmount,
+            keccak256(
+                abi.encodePacked(_orderId, address(bridgeableToken), _tokenAmount)
+            ),
+            _expiration,
+            address(this)
+        );
 
         // Check bridgeableToken balance from exit
         uint256 withdrawAmount = bridgeableToken
@@ -89,7 +113,7 @@ contract Cashier is Ownable {
         bridgeableToken.burn(withdrawAmount);
 
         /// If user asked same coin as reserve, send directly
-        if (_withdrawToken == reserveToken) {
+        if (_paymentToken == reserveToken) {
             reserveToken.safeTransfer(msg.sender, withdrawAmount);
 
         /// reserve <> token conversion
@@ -99,7 +123,7 @@ contract Cashier is Ownable {
                     ISwapManager.swapTokenToToken.selector,
                     // args
                     reserveToken,
-                    _withdrawToken,
+                    _paymentToken,
                     withdrawAmount,
                     0, /// maxDstAmount ??
                     msg.sender /// _beneficiary
@@ -116,7 +140,8 @@ contract Cashier is Ownable {
      */
     function deposit(
         IERC20 _depositToken,
-        uint256 _depositAmount
+        uint256 _depositAmount,
+        address _addrTo
     )
         external
     {
@@ -153,13 +178,13 @@ contract Cashier is Ownable {
         // mint 1:1 and deposit
         bridgeableToken.mint(address(this), _depositAmount);
 
-        _posDeposit(bridgeableToken, msg.sender, _depositAmount);
+        _posDeposit(bridgeableToken, _addrTo, _depositAmount);
     }
 
     /**
      * @dev deposit eth
      */
-    function deposit() external payable {
+    function deposit(address _addrTo) external payable {
         require(msg.value > 0, "Cashier :: invalid msg.value");
 
         bytes memory r = address(swapManager).callfn(
@@ -177,7 +202,7 @@ contract Cashier is Ownable {
         (uint256 _depositAmount, uint256 reminder) = abi.decode(r, (uint256,uint256));
         require(reminder == 0, "Cashier :: reminder swap tx");
 
-        _posDeposit(bridgeableToken, msg.sender, _depositAmount);
+        _posDeposit(bridgeableToken, _addrTo, _depositAmount);
     }
 
     /**
@@ -187,7 +212,6 @@ contract Cashier is Ownable {
      * @param _erc20Token to deposit
      * @param _toAddr user address to send tokens to
      * @param _amount amount to deposit
-     * @param _bridge address of the POS bridge
      */
     function _posDeposit(
         IBridgableToken _erc20Token,
