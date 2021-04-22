@@ -1,5 +1,4 @@
 const { accounts, contract } = require('@openzeppelin/test-environment')
-// const { deployProxy } = require('@openzeppelin/truffle-upgrades');
 
 const {
   BN,
@@ -9,15 +8,15 @@ const {
 
 const { toWei } = require('web3-utils')
 
-const TSToken = contract.fromArtifact('TSX');
-const VestingManager = contract.fromArtifact('VestingManager');
+const TSToken =  contract.fromArtifact('TSX');
+const VestingManager =  contract.fromArtifact('VestingManager');
 
 const expect = require('chai')
   .use(require('bn-chai')(BN))
   .expect
 
 describe('VestingManager', function () {
-  const [owner, notOwner, party1, party2, party3, party4, party5, party6, party7] = accounts
+  const [ owner, notOwner, party1, party2, party3, party4, party5, party6, party7 ] = accounts
 
   let vestingManager;
   let token;

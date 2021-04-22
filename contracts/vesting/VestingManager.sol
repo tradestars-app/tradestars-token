@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.8;
-
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import "./TokenVesting.sol";
 
@@ -13,7 +11,7 @@ import "./TokenVesting.sol";
  * @title VestingManager
  * @dev Manager for ERC20 token vesting plan.
  */
-contract VestingManager is Initializable, Ownable {
+contract VestingManager is Ownable {
 
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -21,18 +19,16 @@ contract VestingManager is Initializable, Ownable {
     event BeneficiaryAdded(address beneficiary, uint256 amount);
     event BeneficiaryRevoked(address beneficiary);
 
-    /// Token registry
+    // Token registry
     IERC20 _vestingToken;
 
-    /// Array of available vesting contracts
+    // Array of available vesting contracts
     TokenVesting[] private _vestingContractsArr;
 
-    /// Vesting Map
+    // Vesting Map
     mapping (address => TokenVesting) private _vestingContractsMap;
 
-    constructor() Ownable() public {}
-
-    function initialize(address _token) public initializer {
+    constructor(address _token) Ownable() public {
         _vestingToken = IERC20(_token);
     }
 
@@ -60,7 +56,7 @@ contract VestingManager is Initializable, Ownable {
             "VestingManager: not enought balance"
         );
         require(
-            _vestingContractsMap[beneficiary] == TokenVesting(0),
+            _vestingContractsMap[beneficiary] == TokenVesting(address(0)),
             "VestingManager: beneficiary already added"
         );
 
@@ -101,12 +97,12 @@ contract VestingManager is Initializable, Ownable {
         for (uint256 x = 0; x < _vestingContractsArr.length; x++) {
             TokenVesting vestingContract = _vestingContractsArr[x];
 
-            /// Get token locked in this contract.
+            // Get token locked in this contract.
             uint256 balance = _vestingToken.balanceOf(
                 address(vestingContract)
             );
 
-            /// add to total counter
+            // add to total counter
             totalAmount = totalAmount.add(balance);
         }
 

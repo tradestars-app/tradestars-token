@@ -50,11 +50,6 @@ describe('Cashier', function () {
       this.uniswapRouterMock.address, { from: owner }
       )
 
-    // // link safedelegate lib
-    // const safeDelegate = await SafeDelegate.new({ from: owner })
-    // await Cashier.detectNetwork()
-    // await Cashier.link('SafeDelegate', safeDelegate.address)
-
     /// Cashier
     this.cashier = await Cashier.new(
       this.bridge.address,
@@ -251,6 +246,13 @@ describe('Cashier', function () {
       const amount = await this.reserveToken.balanceOf(
         this.cashier.address
       );
+
+      // uint256 _tokenAmount,
+      // uint256 _expiration,
+      // bytes32 _orderId,
+      // bytes calldata _orderSignature,
+      // IERC20 _paymentToken,
+      // bytes calldata _burnProof
 
       const tx = await this.cashier.withdraw(
         this.reserveToken.address,

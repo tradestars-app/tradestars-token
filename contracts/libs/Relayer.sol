@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.8;
+pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 abstract contract Relayer {
 
@@ -83,6 +83,6 @@ abstract contract Relayer {
             }
             return result;
         }
-        return msg.sender;
+        return payable(msg.sender);
     }
 }

@@ -1,53 +1,73 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.8;
+pragma solidity ^0.8.0;
 
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Snapshot.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Pausable.sol";
 
-import "@openzeppelin/contracts/utils/Pausable.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
-import "@openzeppelin/contracts/token/ERC20/ERC20Snapshot.sol";
+/**
+ * @dev {TSX}:
+ *  - mint/burn/pause capabilities
+ *  - a minter role that allows for token minting (creation)
+ *  - a pauser role that allows to stop all token transfers
+ *
+ * The account that deploys the contract will be granted the minter and pauser
+ * roles, as well as the default admin role, which will let it grant both minter
+ * and pauser roles to other accounts.
+ */
 
+contract TSX is AccessControlEnumerable, ERC20Snapshot, ERC20Burnable, ERC20Pausable {
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
-contract TSX is Ownable, Pausable, ERC20Snapshot {
-
-    /// Token details
+    // Token details
     string public constant NAME = "TradeStars TSX";
     string public constant SYMBOL = "TSX";
 
-    constructor() Ownable() ERC20(NAME, SYMBOL) public {
+    constructor() ERC20(NAME, SYMBOL) {
+        _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
 
+        _setupRole(MINTER_ROLE, msg.sender);
+        _setupRole(PAUSER_ROLE, msg.sender);
     }
 
     /**
-     * @dev changes the paused state. called by owner only
-     * @param _setPaused paused status
-     */
-    function pause(bool _setPaused) public onlyOwner {
-        _setPaused ? _pause() : _unpause();
-    }
-
-    /**
-     * @dev Mints a specific amount of tokens.
+     * @dev Mints a specific amount of tokens. The caller must have the `MINTER_ROLE`.
      * @param _to The amount of token to be minted.
      * @param _value The amount of token to be minted.
      */
-    function mint(address _to, uint256 _value) external onlyOwner {
+    function mint(address _to, uint256 _value) public virtual {
+        require(hasRole(MINTER_ROLE, msg.sender), "TSX: must have minter role to mint");
         _mint(_to, _value);
     }
 
     /**
-     * @dev _beforeTokenTransfer hook
+     * @dev Pauses all token transfers. The caller must have the `PAUSER_ROLE`.
      */
-    function _beforeTokenTransfer(
-        address _from,
-        address _to,
-        uint256 _amount
-    )
-        internal virtual override
-    {
-        super._beforeTokenTransfer(_from, _to, _amount);
+    function pause() public virtual {
+        require(hasRole(PAUSER_ROLE, msg.sender), "TSX: must have pauser role to pause");
+        _pause();
+    }
 
-        require(!paused(), "ERC20Pausable: token transfer while paused");
+    /**
+     * @dev Unpauses all token transfers. the caller must have the `PAUSER_ROLE`.
+     */
+    function unpause() public virtual {
+        require(hasRole(PAUSER_ROLE, msg.sender), "TSX: must have pauser role to unpause");
+        _unpause();
+    }
+
+    function _beforeTokenTransfer(
+        address from, 
+        address to, 
+        uint256 amount
+    ) 
+        internal virtual override(ERC20, ERC20Snapshot, ERC20Pausable) 
+    {
+        super._beforeTokenTransfer(from, to, amount);
     }
 }

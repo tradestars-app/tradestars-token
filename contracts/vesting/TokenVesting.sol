@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.8;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 /**
  * @title TokenVesting
@@ -26,14 +27,14 @@ contract TokenVesting is Ownable {
     event TokenVestingRevoked(address token);
 
     // beneficiary of tokens after they are released
-    address private _beneficiary;
+    address private immutable _beneficiary;
 
     // Durations and timestamps are expressed in UNIX time, the same units as block.timestamp.
-    uint256 private _cliff;
-    uint256 private _start;
-    uint256 private _duration;
+    uint256 private immutable _cliff;
+    uint256 private immutable _start;
+    uint256 private immutable _duration;
 
-    bool private _revocable;
+    bool private immutable _revocable;
 
     mapping (address => uint256) private _released;
     mapping (address => bool) private _revoked;
@@ -75,49 +76,49 @@ contract TokenVesting is Ownable {
     /**
      * @return the beneficiary of the tokens.
      */
-    function beneficiary() public view returns (address) {
+    function beneficiary() external view returns (address) {
         return _beneficiary;
     }
 
     /**
      * @return the cliff time of the token vesting.
      */
-    function cliff() public view returns (uint256) {
+    function cliff() external view returns (uint256) {
         return _cliff;
     }
 
     /**
      * @return the start time of the token vesting.
      */
-    function start() public view returns (uint256) {
+    function start() external view returns (uint256) {
         return _start;
     }
 
     /**
      * @return the duration of the token vesting.
      */
-    function duration() public view returns (uint256) {
+    function duration() external view returns (uint256) {
         return _duration;
     }
 
     /**
      * @return true if the vesting is revocable.
      */
-    function revocable() public view returns (bool) {
+    function revocable() external view returns (bool) {
         return _revocable;
     }
 
     /**
      * @return the amount of the token released.
      */
-    function released(address token) public view returns (uint256) {
+    function released(address token) external view returns (uint256) {
         return _released[token];
     }
 
     /**
      * @return true if the token is revoked.
      */
-    function revoked(address token) public view returns (bool) {
+    function revoked(address token) external view returns (bool) {
         return _revoked[token];
     }
 
@@ -125,7 +126,7 @@ contract TokenVesting is Ownable {
      * @notice Transfers vested tokens to beneficiary.
      * @param token ERC20 token which is being vested
      */
-    function release(IERC20 token) public {
+    function release(IERC20 token) external {
         uint256 unreleased = _releasableAmount(token);
 
         require(unreleased > 0, "TokenVesting: no tokens are due");
@@ -142,7 +143,7 @@ contract TokenVesting is Ownable {
      * remain in the contract, the rest are returned to the owner.
      * @param token ERC20 token which is being vested
      */
-    function revoke(IERC20 token) public onlyOwner {
+    function revoke(IERC20 token) external onlyOwner {
         require(_revocable, "TokenVesting: cannot revoke");
         require(!_revoked[address(token)], "TokenVesting: token already revoked");
 
