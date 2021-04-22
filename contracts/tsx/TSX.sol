@@ -25,6 +25,7 @@ import "@openzeppelin/contracts/utils/Context.sol";
 contract TSX is Context, AccessControlEnumerable, ERC20Snapshot, ERC20Burnable, ERC20Pausable {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    bytes32 public constant SNAPSHOT_ROLE = keccak256("SNAPSHOT_ROLE");
 
     // Token details
     string public constant NAME = "TradeStars TSX";
@@ -35,6 +36,15 @@ contract TSX is Context, AccessControlEnumerable, ERC20Snapshot, ERC20Burnable, 
 
         _setupRole(MINTER_ROLE, _msgSender());
         _setupRole(PAUSER_ROLE, _msgSender());
+        _setupRole(SNAPSHOT_ROLE, _msgSender());
+    }
+    
+    /**
+     * @dev Takes a snapshop of the token at the current block. The caller must have the `SNAPSHOT_ROLE`.
+     */
+    function snapshot() public virtual {
+        require(hasRole(SNAPSHOT_ROLE, _msgSender()), "TSX: must have snapshot role");
+        _snapshot(_to, _value);
     }
 
     /**
@@ -43,7 +53,7 @@ contract TSX is Context, AccessControlEnumerable, ERC20Snapshot, ERC20Burnable, 
      * @param _value The amount of token to be minted.
      */
     function mint(address _to, uint256 _value) public virtual {
-        require(hasRole(MINTER_ROLE, _msgSender()), "TSX: must have minter role to mint");
+        require(hasRole(MINTER_ROLE, _msgSender()), "TSX: must have minter role");
         _mint(_to, _value);
     }
 
@@ -51,7 +61,7 @@ contract TSX is Context, AccessControlEnumerable, ERC20Snapshot, ERC20Burnable, 
      * @dev Pauses all token transfers. The caller must have the `PAUSER_ROLE`.
      */
     function pause() public virtual {
-        require(hasRole(PAUSER_ROLE, _msgSender()), "TSX: must have pauser role to pause");
+        require(hasRole(PAUSER_ROLE, _msgSender()), "TSX: must have pauser role");
         _pause();
     }
 
@@ -59,7 +69,7 @@ contract TSX is Context, AccessControlEnumerable, ERC20Snapshot, ERC20Burnable, 
      * @dev Unpauses all token transfers. the caller must have the `PAUSER_ROLE`.
      */
     function unpause() public virtual {
-        require(hasRole(PAUSER_ROLE, _msgSender()), "TSX: must have pauser role to unpause");
+        require(hasRole(PAUSER_ROLE, _msgSender()), "TSX: must have pauser role");
         _unpause();
     }
 
