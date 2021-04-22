@@ -44,7 +44,7 @@ contract TSX is Context, AccessControlEnumerable, ERC20Snapshot, ERC20Burnable, 
      */
     function snapshot() public virtual {
         require(hasRole(SNAPSHOT_ROLE, _msgSender()), "TSX: must have snapshot role");
-        _snapshot(_to, _value);
+        _snapshot();
     }
 
     /**
