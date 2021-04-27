@@ -13,13 +13,6 @@ contract LibTokenTransferOrder is LibEIP712Domain {
         abi.encodePacked(EIP712_TOKEN_TRANSFER_ORDER_SCHEMA)
     );
 
-    struct TokenTransferOrder {
-        address spender;
-        uint256 tokenIdOrAmount;
-        bytes32 data;
-        uint256 expiration;
-    }
-
     function getTokenTransferOrderHash(
         address spender,
         uint256 tokenIdOrAmount,

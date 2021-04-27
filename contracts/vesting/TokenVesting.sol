@@ -140,12 +140,13 @@ contract TokenVesting is Ownable {
 
     /**
      * @notice Allows the owner to revoke the vesting. Tokens already vested
-     * remain in the contract, the rest are returned to the owner.
+     *  remain in the contract, the rest are returned to the owner. 
+     *  Can only be called by the owner of the contract
+     * 
      * @param token ERC20 token which is being vested
      */
     function revoke(IERC20 token) external onlyOwner {
         require(_revocable, "TokenVesting: cannot revoke");
-        require(!_revoked[address(token)], "TokenVesting: token already revoked");
 
         uint256 balance = token.balanceOf(address(this));
 

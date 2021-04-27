@@ -11,9 +11,8 @@ contract LibEIP712Domain {
         abi.encodePacked(EIP712_DOMAIN_SCHEMA)
     );
 
-    string constant internal EIP712_DOMAIN_NAME = "Matic Network";
+    string constant internal EIP712_DOMAIN_NAME = "TradeStars";
     string constant internal EIP712_DOMAIN_VERSION = "1";
-    uint256 constant internal EIP712_DOMAIN_CHAINID = 80001;
 
     bytes32 public EIP712_DOMAIN_HASH;
 
@@ -23,7 +22,7 @@ contract LibEIP712Domain {
                 EIP712_DOMAIN_SCHEMA_HASH,
                 keccak256(bytes(EIP712_DOMAIN_NAME)),
                 keccak256(bytes(EIP712_DOMAIN_VERSION)),
-                EIP712_DOMAIN_CHAINID,
+                block.chainid, // 
                 address(this)
             )
         );
