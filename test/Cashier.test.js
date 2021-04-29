@@ -10,17 +10,17 @@ const {
 const { balanceSnap, etherSnap } = require('./helpers/balanceSnap')
 const { toWei, toHex, soliditySha3 } = require('web3-utils')
 
-const sTSX = contract.fromArtifact('sTSX')
-const Cashier = contract.fromArtifact('Cashier')
+const sTSX = artifacts.require('sTSX')
+const Cashier = artifacts.require('Cashier')
 
-const ERC20Mock = contract.fromArtifact('ERC20Mock')
+const ERC20Mock = artifacts.require('ERC20Mock')
 
 /// Matic pos
-const Bridge = contract.fromArtifact('BridgeMock')
+const Bridge = artifacts.require('BridgeMock')
 
 /// UniswapConvert implementation
-const UniswapManager = contract.fromArtifact('UniswapManager')
-const UniswapRouterMock = contract.fromArtifact('UniswapRouterMock')
+const UniswapManager = artifacts.require('UniswapManager')
+const UniswapRouterMock = artifacts.require('UniswapRouterMock')
 
 const expect = require('chai')
   .use(require('bn-chai')(BN))
